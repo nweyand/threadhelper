@@ -47,7 +47,8 @@ public:
 
 	/**
 	 * @brief valid
-	 * @return <code>true</code> if setup() has been called, <code>false</code> otherwise.
+	 * @return <code>true</code> if <code>setup()</code> has been called, <code>false</code>
+	 * otherwise.
 	 */
 	inline bool valid() const { return m_bValid; }
 
@@ -55,19 +56,45 @@ protected:
 	/**
 	 * @brief setupFinished must be called by child classes before returning from setup.
 	 */
-	void setupFinished();
+	inline void setupFinished() { m_bValid = true; }
+
+	/**
+	 * @brief shutDownRequested should be called repeatedly by tasks requiring lengthy continuous
+	 * work to check whether aborting the work is desired by the thread.
+	 * Note that the runnable is expected to emit <code>finished()</code> after finishing the abort.
+	 * @return <code>true</code> if a shutdown has been requested, <code>false</code> otherwise.
+	 */
+	inline bool shutDownRequested() const { return m_bShutDownFlag; }
 
 private:
 	bool m_bValid;
+	bool m_bShutDownFlag;
+
+	/**
+	 * @brief requestShutDown is to be called by Thread only. :)
+	 */
+	inline void requestShutDown() { m_bShutDownFlag = true; }
 
 signals:
 	/**
 	 * @brief finished must be emitted when the has finished its work and is ready to be deleted.
-	 * Usually, this would be at the end of cleanup() if the Runnable is not to be recycled.
+	 * Note that it is guaranteed for this signal to be emitted only once – therefore child classes
+	 * must use the slot <code>finish()</code> to emit this signal and not emit it directly.
+	 * The only method that is guaranteed to be entered from the Thread’s event loop after emitting
+	 * this signal is <code>cleanup()</code>
 	 */
 	void finished();
 
-private slots:
+protected slots:
+	/**
+	 * @brief finish will be called via <code>Qt::QueuedConnection<code> by Thread on recieving a
+	 * shutdown request. Call it yourself if your Runnable has finished its work and whishes to be
+	 * deleted. Reimplement this if you need to do something on shutdown that you don’t want to put
+	 * into cleanup(). Note that your reimplementation must always guarantee for
+	 * <code>finished()</code> to be emitted no more than once.
+	 */
+	void finish();
+
 	/**
 	 * @brief setup is the place to initialize variables etc.
 	 */
@@ -75,7 +102,7 @@ private slots:
 
 	/**
 	 * @brief cleanup is the spot where all the cleanup work that should not go into the destructor
-	 * takes place.
+	 * takes place. Note: This happens after <code>finished()</code> has been emitted.
 	 */
 	virtual void cleanup() = 0;
 

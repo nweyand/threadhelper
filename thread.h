@@ -36,8 +36,8 @@
 class Thread: public QThread
 {
 	Q_OBJECT
-public:
 
+public:
 	/**
 	 * @brief Thread creates a new Thread wrapper object.
 	 * @param parent allows to specify a parent to handle memory cleanup if this is desired.
@@ -59,6 +59,13 @@ public:
 	 * @param p             The process priority. See the documentation of QThread for more details.
 	 */
 	void start( QString sThreadName, Runnable* pRunnable, QThread::Priority p = InheritPriority );
+
+public slots:
+	/**
+	 * @brief requestShutDown allows the caller to request a thread to stop operation in a
+	 * (self-)controlled manner.
+	 */
+	void requestShutDown();
 
 protected:
 	void run();

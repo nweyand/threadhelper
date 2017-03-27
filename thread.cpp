@@ -44,7 +44,20 @@ void Thread::start( QString sThreadName, Runnable* pRunnable, QThread::Priority 
 	connect( m_pRunnable, &Runnable::finished,
 	         m_pRunnable, &Runnable::deleteLater, Qt::UniqueConnection );
 
+	// TODO: implement wait mechanism to wait on several runnables within one thread
+	connect( m_pRunnable, &Runnable::finished, this, &Thread::quit, Qt::QueuedConnection );
+
 	QThread::start( p );
+}
+
+void Thread::requestShutDown()
+{
+	if ( m_pRunnable )
+	{
+		// TODO: maybe add handling for unresponsive Runnable ignoring the shutdown request
+		m_pRunnable->requestShutDown();
+		QMetaObject::invokeMethod( m_pRunnable, "finish", Qt::QueuedConnection );
+	}
 }
 
 void Thread::run()

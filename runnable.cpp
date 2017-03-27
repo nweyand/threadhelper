@@ -28,10 +28,15 @@ Runnable::Runnable(QObject *parent) :
     QObject(parent),
     m_bValid( false )
 {
-
 }
 
-void Runnable::setupFinished()
+void Runnable::finish()
 {
-	m_bValid = true;
+	static int reportCounter = 0;
+	if ( !reportCounter++ )
+	{
+		emit finished();
+	}
 }
+
+
